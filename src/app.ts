@@ -1,2 +1,12 @@
+import { Server } from "./presentation/server";
 
-console.log('Test')
+
+
+(async () => {
+    main();
+})();
+
+
+function main (){
+    Server.start()
+}
