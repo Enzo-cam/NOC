@@ -1,3 +1,5 @@
+import { LogEntity, LogSeverityLevel } from "../../entities/log.entity";
+import { LogRepository } from "../../repository/log.repository";
 
 interface ICheckService{
     execute(url:string) :Promise<boolean>;
@@ -9,6 +11,7 @@ type ErrorCB = (error: string) => void;
 export class CheckService implements ICheckService {
     
     constructor(
+        private readonly logRepository: LogRepository,
         private readonly successCB: SuccessCB,
         private readonly errorCB: ErrorCB
     ){}
@@ -22,12 +25,15 @@ export class CheckService implements ICheckService {
                 throw new Error(`Error on check service: ${url}`)
             }
 
-
+            const log = new LogEntity(`Service ${url} is working.`,LogSeverityLevel.low)
+            await this.logRepository.saveLog(log)
             this.successCB();
             return true;
         } catch (error) {
-            // console.log(`${error}: that happen.`)
-            this.errorCB(`${error}`)
+            const errorMsg = `${error}`
+            const log = new LogEntity(errorMsg,LogSeverityLevel.medium)
+            await this.logRepository.saveLog(log)
+            this.errorCB(errorMsg)
             return false;
         }
     }
