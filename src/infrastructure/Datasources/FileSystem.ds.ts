@@ -3,9 +3,8 @@ import { LogDatasource } from "../../domain/datasource/log.datasource";
 import { LogSeverityLevel, LogEntity } from "../../domain/entities/log.entity";
 
 export class FileSystemDS implements LogDatasource {
-    
     private readonly logPath = 'logs/'
-    private readonly lowLogsP = 'logs/logs-low.log'
+    private readonly allLogsP = 'logs/all-logs.log'
     private readonly mediumLogsP = 'logs/logs-medium.log'
     private readonly highLogsP = 'logs/logs-high.log'
     
@@ -20,7 +19,7 @@ export class FileSystemDS implements LogDatasource {
             fs.mkdirSync(this.logPath)
         }
 
-        [   this.lowLogsP,
+        [   this.allLogsP,
             this.mediumLogsP,
             this.highLogsP
         ].forEach(path => {
@@ -29,11 +28,35 @@ export class FileSystemDS implements LogDatasource {
         })
     }
 
-  getLogs(severityLevel: LogSeverityLevel): Promise<LogEntity[]> {
-    
-  }
+    async saveLog(newLog: LogEntity): Promise<void> {
+        const logJson = `${JSON.stringify(newLog)}\n`
+        fs.appendFileSync(this.allLogsP, logJson)
 
-  saveLog(log: LogEntity): Promise<void> {
+        if(newLog.level === 'low') return;
 
-  }
+        if(newLog.level === 'medium'){
+            fs.appendFileSync(this.mediumLogsP, logJson)
+        }else{
+            fs.appendFileSync(this.highLogsP, logJson)
+        }
+    }
+
+    private getLogsFromFile = (path: string): LogEntity[] =>{
+        const content = fs.readFileSync(path, 'utf-8')
+        const logs = content.split('\n').map(LogEntity.fromJson)
+        return logs;
+    }
+
+    async getLogs(severityLevel: LogSeverityLevel): Promise<LogEntity[]> {
+        switch(severityLevel){
+            case LogSeverityLevel.low:
+                return this.getLogsFromFile(this.allLogsP)
+            case LogSeverityLevel.medium:
+                return this.getLogsFromFile(this.mediumLogsP)
+            case LogSeverityLevel.high:
+                return this.getLogsFromFile(this.highLogsP)
+            default: 
+                throw new Error(`${severityLevel} not implemented.`)
+        }
+    }
 }
