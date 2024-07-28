@@ -39,5 +39,7 @@ next-env.d.ts
 logs/
 
 mongo/
+mongo-test/
 prisma/
 postgres/
+postgres-test/
